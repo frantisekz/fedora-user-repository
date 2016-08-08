@@ -1,0 +1,178 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+"""
+Fedora User Repository CLI
+
+Spec parsing limitations:
+        Only %{name} and %{version} allowed in Sources and Patches
+        Sources and Patches must be added by url
+        No support for #FUR_BuildRequires
+"""
+
+import sys, os, re, getpass
+import urllib.request
+
+def get_fur_url():
+    with open('/etc/fedora-user-repository', 'r') as url_file:
+        url=url_file.read().replace('\n', '')
+    return url
+
+def get_fedora_version():
+    with open('/etc/fedora-release', 'r') as release_file:
+        fedora_release=release_file.read().replace('\n', '')
+    fedora_release_num = ""
+    for s in fedora_release.split():
+            if s.isdigit():
+                fedora_release_num = fedora_release_num + s
+    return fedora_release_num
+    
+def find_spec_var(name, var):
+    user = getpass.getuser()
+    try:
+        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
+        if (var == "name"):
+            for spec_line in spec_file:
+                if "Name:" in spec_line:
+                    spec_line = re.sub(r"Name:", "", spec_line)
+                    spec_line = spec_line.rstrip()
+                    return spec_line
+
+        if (var == "version"):
+            for spec_line in spec_file:
+                if "Version:" in spec_line:
+                    spec_line = re.sub(r"Version:", "", spec_line)
+                    spec_line = spec_line.rstrip()
+                    return spec_line
+    except:
+        raise NameError("BAD_SPEC")
+    return 0
+
+def get_spec(name):
+    url =  get_fur_url()
+    user = getpass.getuser()
+    os.system("mkdir -p ~/.fur/" + name)
+    try:
+        urllib.request.urlretrieve(url + name + ".spec", "/home/" + user + "/.fur/" + name + "/" + name + ".spec")
+    except:
+        os.system("rm -R ~/.fur/" + name)
+        raise NameError("UNK_PKG")
+
+def get_sources(name):
+    user = getpass.getuser()
+    try:
+        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
+        for spec_line in spec_file:
+            if "Source" in spec_line:
+                name_var = find_spec_var(name, "name")
+                version_var = find_spec_var(name, "version")
+                spec_line = re.sub(r"Source\d{0,5}: ", "", spec_line)
+                spec_line = spec_line.replace("%{name}", name_var)
+                spec_line = spec_line.replace("%{version}", version_var)
+                spec_line = re.sub(r'\s+', '', spec_line)
+                file_name = os.path.basename(spec_line)
+                try:
+                    urllib.request.urlretrieve(spec_line, "/home/" + user + "/.fur/" + name + "/" + file_name)
+                except:
+                    raise NameError("SOURCE_MISS")
+    except:
+        raise NameError("BAD_SPEC")
+
+def get_patches(name):
+    user = getpass.getuser()
+    try:
+        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
+        for spec_line in spec_file:
+            if "Patch" in spec_line:
+                spec_line = re.sub(r"Patch\d{0,5}: ", "", spec_line)
+                spec_line = spec_line.rstrip()
+                file_name = os.path.basename(spec_line)
+                try:
+                    urllib.request.urlretrieve(spec_line, "/home/" + user + "/.fur/" + name + "/" + file_name)
+                except:
+                    raise NameError("PATCH_MISS")
+    except:
+        raise NameError("BAD_SPEC")
+        
+def fur_dependencies(name):
+    user = getpass.getuser()
+    fur_requires_array = []
+    fur_build_requires_array = []
+    try:
+        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
+        for spec_line in spec_file:
+            if "#FUR_Requires" in spec_line:
+                spec_line = spec_line.rstrip()
+                fur_requires_array.append(spec_line)
+            elif "#FUR_BuildRequires" in spec_line:
+                # TODO!
+                print("Support for #FUR_BuildRequires is not implemented yet, exiting...")
+                sys.exit()
+                spec_line = re.sub(r"#FUR_BuildRequires: ", "", spec_line)
+                spec_line = spec_line.rstrip()
+                fur_build_requires_array.append(spec_line)
+    except:
+        raise NameError("BAD_SPEC")
+    
+    for fur_requires in fur_requires_array:
+        fur_requires = re.sub(r"#FUR_Requires:", "", fur_requires)
+        print("Calling dep install for " + fur_requires)
+        os.system("fur install " + fur_requires)
+    
+    #for fur_build_requires in fur_build_requires_array:
+    #   os.system("fur install " + fur_build_requires)
+
+def build_package(name):
+    user = getpass.getuser()
+    SRPM_RE = re.compile(r".+\.?src\.rpm")
+    os.system("rpmbuild -bs " + "~/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + name + "/' --define '_topdir /home/" + user + "/.fur/" + name + "'")
+    srpms_dir = "/home/" + user + "/.fur/" + name + "/SRPMS/"
+    srpms = [f for f in os.listdir(srpms_dir) if SRPM_RE.search(f)]
+    assert len(srpms) == 1, "We expect 1 .src.rpm, but we found: {!r}".format(srpms)
+    srpm = os.path.join(srpms_dir, srpms[0])
+    os.system("mock --resultdir=/home/" + user + "/.fur/" + name + "/ -r fedora-" + get_fedora_version() + "-x86_64 " + srpm)
+    os.system("rm ~/.fur/" + name + "/*.src.rpm")
+
+def clean_debug(name):
+    os.system("rm ~/.fur/" + name + "/*-debuginfo*")
+
+def install_package(name):
+    os.system("sudo dnf install ~/.fur/" + name + "/*.rpm")
+    
+def postinst_clean(name):
+    os.system("rm -R ~/.fur/" + name)
+
+if len(sys.argv) == 3 and sys.argv[1] == "install":
+    package = sys.argv[2]
+else:
+    print("Use fur install [package] to install something")
+    print("Other commands are not implemented yet...")
+    sys.exit()
+    
+try:
+    get_spec(package)
+except NameError:
+    print("Invalid package name or network problem, exiting...")
+    sys.exit()
+try:
+    get_sources(package)
+except NameError("SOURCE_MISS"):
+    print("Cannot download one or more source files, exiting...")
+    sys.exit()
+except NameError("BAD_SPEC"):
+    print("Provided spec file is broken, exiting...")
+    sys.exit()
+
+try:
+    get_patches(package)
+except NameError("PATCH_MISS"):
+    print("Cannot download one or more source files, exiting...")
+    sys.exit()
+except NameError("BAD_SPEC"):
+    print("Provided spec file is broken, exiting...")
+    sys.exit()
+
+fur_dependencies(package)
+build_package(package)
+clean_debug(package)
+install_package(package)
+postinst_clean(package)
