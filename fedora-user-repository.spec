@@ -1,7 +1,7 @@
 %define debug_package %{nil}
 
 Name:    fedora-user-repository
-Version: 0.1.1
+Version: 0.5.0
 Release: 1
 Summary: Fedora User Repository
 BuildArchitectures: noarch
@@ -10,7 +10,7 @@ URL:     https://experimental-fur.rhcloud.com
 Source0: fur
 Source1: %{name}
 
-Requires: python3
+Requires: python3 rpmdevtools mock
 
 %description
 Fedora User Repository CLI
@@ -35,6 +35,12 @@ install -d %{buildroot}%{_bindir}
 %{_sysconfdir}/%{name}
 
 %changelog
+* Mon Aug 22 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.5.0-1
+- Release 0.5.0
+- Drop .spec parsing code around getting Sources/Patches and just use Fedora spectool
+- Use mockchain instead of mock to prepare for BuildRequires from FUR
+- cleaning up
+
 * Mon Aug 8 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.1.1-1
 - Release 0.1.1
 - Support for %{name} and %{version} in Sources and Patches
