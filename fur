@@ -12,16 +12,16 @@ import urllib.request
 
 def get_fur_url():
     with open('/etc/fedora-user-repository', 'r') as url_file:
-        url=url_file.read().replace('\n', '')
+        url = url_file.read().replace('\n', '')
     return url
 
 def get_fedora_version():
     with open('/etc/fedora-release', 'r') as release_file:
-        fedora_release=release_file.read().replace('\n', '')
+        fedora_release = release_file.read().replace('\n', '')
     fedora_release_num = ""
     for s in fedora_release.split():
-            if s.isdigit():
-                fedora_release_num = fedora_release_num + s
+        if s.isdigit():
+            fedora_release_num = fedora_release_num + s
     return fedora_release_num
 
 def find_spec_var(name, var):
@@ -45,8 +45,8 @@ def find_spec_var(name, var):
         raise NameError("BAD_SPEC")
     return 0
 
-def get_spec(name, path = 0):
-    url =  get_fur_url()
+def get_spec(name, path=0):
+    url = get_fur_url()
     user = getpass.getuser()
     os.system("mkdir -p ~/.fur/" + name)
     if (path != 0):
@@ -107,9 +107,9 @@ def fur_dependencies(name):
         os.system("fur install " + fur_requires)
 
     for fur_build_requires in fur_build_requires_array:
-       os.system("fur source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
+        os.system("fur source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
 
-def build_srpm(name, path = 0):
+def build_srpm(name, path=0):
     user = getpass.getuser()
     if (path != 0):
         os.system("rpmbuild -bs " + "/home/" + user + "/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + path + "/' --define '_topdir /home/" + user + "/.fur/" + path + "'")
