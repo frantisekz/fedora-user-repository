@@ -153,7 +153,7 @@ if len(sys.argv) == 3 and sys.argv[1] == "install":
     build_package(package)
     clean_debug(package)
     install_package(package)
-    #postinst_clean(package)
+    postinst_clean(package)
 elif len(sys.argv) == 4 and sys.argv[1] == "source":
     package = sys.argv[2]
     path = sys.argv[3]

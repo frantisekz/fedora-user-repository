@@ -1,7 +1,7 @@
 %define debug_package %{nil}
 
 Name:    fedora-user-repository
-Version: 0.5.0
+Version: 0.5.1
 Release: 1
 Summary: Fedora User Repository
 BuildArchitectures: noarch
@@ -35,6 +35,9 @@ install -d %{buildroot}%{_bindir}
 %{_sysconfdir}/%{name}
 
 %changelog
+* Mon Aug 22 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.5.1-1
+- Turn off debug mode
+
 * Mon Aug 22 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.5.0-1
 - Release 0.5.0
 - Drop .spec parsing code around getting Sources/Patches and just use Fedora spectool
