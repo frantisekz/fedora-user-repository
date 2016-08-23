@@ -14,11 +14,17 @@ import getpass
 import urllib.request
 
 def get_fur_url():
+    """
+    Loads Fedora User Repository url from /etc/fedora-user-repository.
+    """
     with open('/etc/fedora-user-repository', 'r') as url_file:
         url = url_file.read().replace('\n', '')
     return url
 
 def get_fedora_version():
+    """
+    Outputs Fedora version.
+    """
     with open('/etc/fedora-release', 'r') as release_file:
         fedora_release = release_file.read().replace('\n', '')
     fedora_release_num = ""
@@ -49,6 +55,9 @@ def find_spec_var(name, var):
     return 0
 
 def get_spec(name, path=0):
+    """
+    Accepts package name and path (optionally). Tries to get spec file from Fedora User Repository.
+    """
     url = get_fur_url()
     user = getpass.getuser()
     os.system("mkdir -p ~/.fur/" + name)
@@ -66,10 +75,17 @@ def get_spec(name, path=0):
             raise NameError("UNK_PKG")
 
 def get_sources(name):
+    """
+    Accepts package name, tries to get all source files (and patches) with Fedora's spectool.
+    """
     user = getpass.getuser()
     os.system("spectool -all --get-files --directory /home/" + user + "/.fur/" + name + "/ /home/" + user + "/.fur/" + name + "/" + name + ".spec")
 
 def fur_dependencies(name):
+    """
+    Accepts package name, runs trough entire spec file for ALL BuildRequires and Requires.
+    Try to install them from Fedora User Repository, ignores missing dependencies, which will be solved and installed by dnf later.
+    """
     user = getpass.getuser()
     fur_requires_array = []
     fur_build_requires_array = []
@@ -96,6 +112,9 @@ def fur_dependencies(name):
         os.system("fur source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
 
 def build_srpm(name, path=0):
+    """
+    Accepts package name and (optionally) path where it'll store .src.rpm file made from spec and sources available.
+    """
     user = getpass.getuser()
     if path != 0:
         os.system("rpmbuild -bs " + "/home/" + user + "/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + path + "/' --define '_topdir /home/" + user + "/.fur/" + path + "'")
@@ -103,6 +122,9 @@ def build_srpm(name, path=0):
         os.system("rpmbuild -bs " + "/home/" + user + "/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + name + "/' --define '_topdir /home/" + user + "/.fur/" + name + "'")
 
 def build_package(name):
+    """
+    Accepts package name. Compiles all .src.rpm files to the rpm, recursively tries to satisfy build time dependencies.
+    """
     user = getpass.getuser()
     srpms_dir = "/home/" + user + "/.fur/" + name + "/SRPMS/"
     os.system("mockchain -r fedora-" + get_fedora_version() + "-x86_64 -m --resultdir=/home/" + user + "/.fur/" + name + "/RPMS/ " + srpms_dir + "/*")
@@ -110,12 +132,21 @@ def build_package(name):
     os.system("rm ~/.fur/" + name + "/RPMS/*.src.rpm")
 
 def clean_debug(name):
+    """
+    Accepts package name, removes all -debuginfo packages.
+    """
     os.system("rm ~/.fur/" + name + "/*-debuginfo*")
 
 def install_package(name):
+    """
+    Accepts package name, calls dnf to install all compiled rpm files.
+    """
     os.system("sudo dnf install ~/.fur/" + name + "/RPMS/*.rpm")
 
 def postinst_clean(name):
+    """
+    Accepts package name, removes entire working directory inside ~/.fur/ .
+    """
     os.system("rm -R ~/.fur/" + name)
 
 if "install" in sys.argv:
