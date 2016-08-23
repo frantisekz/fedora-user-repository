@@ -66,22 +66,6 @@ def get_sources(name):
     user = getpass.getuser()
     os.system("spectool -all --get-files --directory /home/" + user + "/.fur/" + name + "/ /home/" + user + "/.fur/" + name + "/" + name + ".spec")
 
-def get_patches(name):
-    user = getpass.getuser()
-    try:
-        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
-        for spec_line in spec_file:
-            if "Patch" in spec_line:
-                spec_line = re.sub(r"Patch\d{0,5}: ", "", spec_line)
-                spec_line = spec_line.rstrip()
-                file_name = os.path.basename(spec_line)
-                try:
-                    urllib.request.urlretrieve(spec_line, "/home/" + user + "/.fur/" + name + "/" + file_name)
-                except:
-                    raise NameError("PATCH_MISS")
-    except:
-        raise NameError("BAD_SPEC")
-
 def fur_dependencies(name):
     user = getpass.getuser()
     fur_requires_array = []
