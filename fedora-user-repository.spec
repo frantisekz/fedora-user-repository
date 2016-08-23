@@ -1,7 +1,7 @@
 %define debug_package %{nil}
 
 Name:    fedora-user-repository
-Version: 0.5.1
+Version: 0.6.0
 Release: 1
 Summary: Fedora User Repository
 BuildArchitectures: noarch
@@ -35,6 +35,12 @@ install -d %{buildroot}%{_bindir}
 %{_sysconfdir}/%{name}
 
 %changelog
+* Tue Aug 23 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.6.0-1
+- Release 0.6.0
+- Fixes through the entire code
+- Support for other architectures
+- https instead of http to get spec file
+
 * Mon Aug 22 2016 Frantisek Zatloukal <fzatlouk@redhat.com> - 0.5.1-1
 - Turn off debug mode
 
