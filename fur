@@ -7,7 +7,10 @@ Spec parsing limitations:
         Sources and Patches must be added by url
 """
 
-import sys, os, re, getpass
+import sys
+import os
+import re
+import getpass
 import urllib.request
 
 def get_fur_url():
@@ -19,23 +22,23 @@ def get_fedora_version():
     with open('/etc/fedora-release', 'r') as release_file:
         fedora_release = release_file.read().replace('\n', '')
     fedora_release_num = ""
-    for s in fedora_release.split():
-        if s.isdigit():
-            fedora_release_num = fedora_release_num + s
+    for single_char in fedora_release.split():
+        if single_char.isdigit():
+            fedora_release_num = fedora_release_num + single_char
     return fedora_release_num
 
 def find_spec_var(name, var):
     user = getpass.getuser()
     try:
         spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
-        if (var == "name"):
+        if var == "name":
             for spec_line in spec_file:
                 if "Name:" in spec_line:
                     spec_line = re.sub(r"Name:", "", spec_line)
                     spec_line = spec_line.rstrip()
                     return spec_line
 
-        if (var == "version"):
+        if var == "version":
             for spec_line in spec_file:
                 if "Version:" in spec_line:
                     spec_line = re.sub(r"Version:", "", spec_line)
@@ -49,7 +52,7 @@ def get_spec(name, path=0):
     url = get_fur_url()
     user = getpass.getuser()
     os.system("mkdir -p ~/.fur/" + name)
-    if (path != 0):
+    if path != 0:
         try:
             urllib.request.urlretrieve(url + name + ".spec", "/home/" + user + "/.fur/" + path + "/" + name + ".spec")
         except:
@@ -87,15 +90,14 @@ def fur_dependencies(name):
 
     for fur_requires in fur_requires_array:
         # Try to get all the "Requires" from Fedora User Repository
-        print("Calling dep install for " + fur_requires)
-        os.system("fur install " + fur_requires)
+        os.system("fur --quiet install " + fur_requires)
 
     for fur_build_requires in fur_build_requires_array:
         os.system("fur source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
 
 def build_srpm(name, path=0):
     user = getpass.getuser()
-    if (path != 0):
+    if path != 0:
         os.system("rpmbuild -bs " + "/home/" + user + "/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + path + "/' --define '_topdir /home/" + user + "/.fur/" + path + "'")
     else:
         os.system("rpmbuild -bs " + "/home/" + user + "/.fur/" + name + "/" + name + ".spec --define '_sourcedir /home/" + user + "/.fur/" + name + "/' --define '_topdir /home/" + user + "/.fur/" + name + "'")
@@ -116,12 +118,13 @@ def install_package(name):
 def postinst_clean(name):
     os.system("rm -R ~/.fur/" + name)
 
-if len(sys.argv) == 3 and sys.argv[1] == "install":
-    package = sys.argv[2]
+if "install" in sys.argv:
+    package = sys.argv[(sys.argv.index("install") + 1)]
     try:
         get_spec(package)
     except NameError:
-        print("Invalid package name or network problem, exiting...")
+        if "--quiet" not in sys.argv:
+            print("Invalid package name or network problem, exiting...")
         sys.exit()
     try:
         get_sources(package)
@@ -138,9 +141,9 @@ if len(sys.argv) == 3 and sys.argv[1] == "install":
     clean_debug(package)
     install_package(package)
     postinst_clean(package)
-elif len(sys.argv) == 4 and sys.argv[1] == "source":
-    package = sys.argv[2]
-    path = sys.argv[3]
+elif "source" in sys.argv:
+    package = sys.argv[(sys.argv.index("source") + 1)]
+    path = sys.argv[(sys.argv.index("source") + 2)]
     get_spec(package, path)
     get_sources(package)
     build_srpm(package, path)
