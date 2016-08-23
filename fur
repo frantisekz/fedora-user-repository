@@ -12,6 +12,7 @@ import os
 import re
 import getpass
 import urllib.request
+import platform
 
 def get_fur_url():
     """
