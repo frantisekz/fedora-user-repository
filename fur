@@ -33,27 +33,6 @@ def get_fedora_version():
             fedora_release_num = fedora_release_num + single_char
     return fedora_release_num
 
-def find_spec_var(name, var):
-    user = getpass.getuser()
-    try:
-        spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
-        if var == "name":
-            for spec_line in spec_file:
-                if "Name:" in spec_line:
-                    spec_line = re.sub(r"Name:", "", spec_line)
-                    spec_line = spec_line.rstrip()
-                    return spec_line
-
-        if var == "version":
-            for spec_line in spec_file:
-                if "Version:" in spec_line:
-                    spec_line = re.sub(r"Version:", "", spec_line)
-                    spec_line = spec_line.rstrip()
-                    return spec_line
-    except:
-        raise NameError("BAD_SPEC")
-    return 0
-
 def get_spec(name, path=0):
     """
     Accepts package name and path (optionally). Tries to get spec file from Fedora User Repository.
