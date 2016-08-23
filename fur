@@ -88,7 +88,7 @@ def fur_dependencies(name):
         os.system("fur --quiet install " + fur_requires)
 
     for fur_build_requires in fur_build_requires_array:
-        os.system("fur source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
+        os.system("fur --quiet source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
 
 def build_srpm(name, path=0):
     """
@@ -154,7 +154,12 @@ if "install" in sys.argv:
 elif "source" in sys.argv:
     package = sys.argv[(sys.argv.index("source") + 1)]
     path = sys.argv[(sys.argv.index("source") + 2)]
-    get_spec(package, path)
+    try:
+        get_spec(package, path)
+    except NameError:
+        if "--quiet" not in sys.argv:
+            print("Invalid package name or network problem, exiting...")
+        sys.exit()
     get_sources(package)
     build_srpm(package, path)
 else:
