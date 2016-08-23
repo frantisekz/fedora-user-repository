@@ -105,8 +105,9 @@ def build_package(name):
     Accepts package name. Compiles all .src.rpm files to the rpm, recursively tries to satisfy build time dependencies.
     """
     user = getpass.getuser()
+    arch = platform.machine()
     srpms_dir = "/home/" + user + "/.fur/" + name + "/SRPMS/"
-    os.system("mockchain -r fedora-" + get_fedora_version() + "-x86_64 -m --resultdir=/home/" + user + "/.fur/" + name + "/RPMS/ " + srpms_dir + "/*")
+    os.system("mockchain -r fedora-" + get_fedora_version() + "-" + arch + "-m --resultdir=/home/" + user + "/.fur/" + name + "/RPMS/ " + srpms_dir + "/*")
     os.system("rm ~/.fur/" + name + "/*.src.rpm")
     os.system("rm ~/.fur/" + name + "/RPMS/*.src.rpm")
 
