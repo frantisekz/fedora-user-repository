@@ -71,7 +71,7 @@ def fur_dependencies(name):
     fur_build_requires_array = []
     try:
         spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
-        print("Solving dependencies from Fedora User Repository infrastructure...")
+        print("Solving dependencies from Fedora User Repository...")
         for spec_line in spec_file:
             if "BuildRequires" in spec_line:
                 spec_line = re.sub(r"BuildRequires: ", "", spec_line)
@@ -89,7 +89,7 @@ def fur_dependencies(name):
         os.system("fur --quiet install " + fur_requires)
 
     for fur_build_requires in fur_build_requires_array:
-        os.system("fur --quiet source" + fur_build_requires + "/home/" + user + ".fur/" + name + "/SRPMS/")
+        os.system("fur --quiet source" + fur_build_requires + " /home/" + user + ".fur/" + name + "/SRPMS/")
 
 def build_srpm(name, path=0):
     """
@@ -108,7 +108,7 @@ def build_package(name):
     user = getpass.getuser()
     arch = platform.machine()
     srpms_dir = "/home/" + user + "/.fur/" + name + "/SRPMS/"
-    os.system("mockchain -r fedora-" + get_fedora_version() + "-" + arch + "-m --resultdir=/home/" + user + "/.fur/" + name + "/RPMS/ " + srpms_dir + "/*")
+    os.system("mockchain -r fedora-" + get_fedora_version() + "-" + arch + " -m --resultdir=/home/" + user + "/.fur/" + name + "/RPMS/ " + srpms_dir + "/*")
     os.system("rm ~/.fur/" + name + "/*.src.rpm")
     os.system("rm ~/.fur/" + name + "/RPMS/*.src.rpm")
 
