@@ -150,7 +150,8 @@ if "install" in sys.argv:
     build_package(package)
     clean_debug(package)
     install_package(package)
-    postinst_clean(package)
+    if "--no-clean" not in sys.argv:
+        postinst_clean(package)
 elif "source" in sys.argv:
     package = sys.argv[(sys.argv.index("source") + 1)]
     path = sys.argv[(sys.argv.index("source") + 2)]
