@@ -73,7 +73,13 @@ def fur_dependencies(name):
         spec_file = open("/home/" + user + "/.fur/" + name + "/" + name + ".spec", "r")
         print("Solving dependencies from Fedora User Repository...")
         for spec_line in spec_file:
-            if "BuildRequires" in spec_line:
+            if "#BuildRequires" in spec_line:
+                # Skip commented out BuildRequires
+                continue
+            elif "#Requires" in spec_line:
+                # Skip commented out Requires
+                continue
+            elif "BuildRequires" in spec_line:
                 spec_line = re.sub(r"BuildRequires: ", "", spec_line)
                 spec_line = spec_line.rstrip()
                 fur_build_requires_array.append(spec_line)
